@@ -10,90 +10,181 @@ using namespace std;
 class Product {
 public:
     Product(int id, const string& name, double price, int quantity)
-            : id(id), name(name), price(price), quantity(quantity) {}
+            : productId_(id), name_(name), price_(price), quantity_(quantity) {}
 
-    int getId() { return id; }
+    int getId() const { return productId_; }
 
-    string getName() const { return name; }
+    string getName() const { return name_; }
 
-    double getPrice() const { return price; }
+    double getPrice() const { return price_; }
 
-    int getQuantity() const { return quantity; }
+    int getQuantity() const { return quantity_; }
 
-    double calculateTotalCost() { return price * quantity; }
+    double calculateTotalCost() const { return price_ * quantity_; }
 
     virtual void viewProduct() const = 0;
 
-    void setPrice(double p) { price = p; }
+    virtual string getType() const = 0;
 
-    void addProduct() { quantity++; }
+    void setPrice(double p) { price_ = p; }
+
+    void appendProduct(int q) { quantity_ += q; }
 
     void removeProduct() {
-        if (quantity > 0) {
-            quantity--;
+        if (quantity_ > 0) {
+            quantity_--;
         }
         else {
             cout << "Impossible to remove this product" << endl;
         }
     }
 private:
-    int id;
-    string name;
-    double price;
-    int quantity;
+    int productId_;
+    string name_;
+    double price_;
+    int quantity_;
 };
 
 class Electronics : public Product {
 public:
     Electronics(int id, const string& name, double price, int quantity, const string& brand, const string& model, const string& power)
-            : Product(id, name, price, quantity), brand(brand), model(model), powerConsumption(power) {}
+            : Product(id, name, price, quantity), brand_(brand), model_(model), power_(power) {}
 
     void viewProduct() const override {
-        cout << "Electronics:" << endl;
-        cout << getName() << " " << brand << " " << model << "." << endl;
+        cout << getName() << " " << brand_ << " " << model_ << "." << endl;
         cout << "price: " << getPrice() << ", quantity: " << getQuantity() << "." << endl;
     }
+
+    string getType() const override {
+        return "Electronics";
+    }
 private:
-    string brand;
-    string model;
-    string powerConsumption;
+    string brand_;
+    string model_;
+    string power_;
 };
 
 class Books : public Product {
 public:
     Books(int id, const string& name, double price, int quantity, const string& author, const string& genre, const string& isbn)
-            : Product(id, name, price, quantity), author(author), genre(genre), ISBN(isbn) {}
+            : Product(id, name, price, quantity), author_(author), genre_(genre), ISBN_(isbn) {}
 
     void viewProduct() const override {
-        cout << "Books:" << endl;
-        cout << getName() << " by " << author << ", genre: " << genre << "." << endl;
+        cout << getName() << " by " << author_ << ", genre: " << genre_ << "." << endl;
         cout << "price: " << getPrice() << ", quantity: " << getQuantity() << "." << endl;
     }
+
+    string getType() const override {
+        return "Books";
+    }
 private:
-    string author;
-    string genre;
-    string ISBN;
+    string author_;
+    string genre_;
+    string ISBN_;
 };
 
 class Clothing : public Product {
 public:
     Clothing(int id, const string& name, double price, int quantity, const string& size, const string& color, const string& material)
-            : Product(id, name, price, quantity), size(size), color(color), material(material) {}
+            : Product(id, name, price, quantity), size_(size), color_(color), material_(material) {}
 
     void viewProduct() const override {
-        cout << "Clothing:" << endl;
-        cout << size << " " << color << " " << getName() << ", material: " << material << "." << endl;
+        cout << size_ << " " << color_ << " " << getName() << ", material: " << material_ << "." << endl;
         cout << "price: " << getPrice() << ", quantity: " << getQuantity() << "." << endl;
     }
 
+    string getType() const override {
+        return "Clothing";
+    }
 private:
-    string size;
-    string color;
-    string material;
+    string size_;
+    string color_;
+    string material_;
+};
+
+class ProductCatalog {
+public:
+    void addProduct(Product* product) {
+        products_.push_back(product);
+    }
+
+    void viewProductListWithIds() {
+        cout << "Product List with IDs: \n" << endl;
+        for (const auto& product : products_) {
+            cout << product->getName() << " = " << product->getId() << endl;
+        }
+        cout << "" << endl;
+    }
+
+    void appendProduct(int productId, int quantity) {
+        for (const auto& product : products_) {
+            if (product->getId() == productId) {
+                product->appendProduct(quantity);
+                cout << "New " << product->getName() << " quantity: " << product->getQuantity() << endl;
+                return;
+            }
+        }
+        cout << "Product is not found" << endl;
+    }
+
+    void removeProduct(int productId) {
+        for (const auto& product : products_) {
+            if (product->getId() == productId) {
+                product->removeProduct();
+                cout << "Product " << product->getName() << " was removed" << endl;
+                return;
+            }
+        }
+        cout << "Product is not found" << endl;
+    }
+
+    void updateProduct(int productId, double newPrice) {
+        for (const auto& product : products_) {
+            if (product->getId() == productId) {
+                product->setPrice(newPrice);
+                cout << "New " << product->getName() << " price: $" << product->getPrice() << endl;
+                return;
+            }
+        }
+        cout << "Product is not found" << endl;
+    }
+
+    void viewProducts() {
+        for (const auto& product : products_) {
+            product->viewProduct();
+            cout << "Total Cost: $" << product->calculateTotalCost() << endl;
+            cout << "-------------" << endl;
+        }
+    }
+
+    void viewProductsByType(const string& type) {
+        int counter;
+        for (const auto& product : products_) {
+            if (product->getType() == type) {
+                product->viewProduct();
+                cout << "Total Cost: $" << product->calculateTotalCost() << endl;
+                cout << "-------------" << endl;
+                counter++;
+            }
+            if (counter == 3) {
+                return;
+            }
+        }
+        cout << "Invalid type" << endl;
+    }
+
+    ~ProductCatalog() {
+        for (const auto& product : products_) {
+            delete product;
+        }
+    }
+private:
+    vector<Product*> products_;
 };
 
 class FileReader {
 public:
+    FileReader(const string& filename, ProductCatalog* productCatalog) : filename_(filename), productCatalog_(productCatalog) {}
 
     static int generateRandomTicketId() {
         random_device rd;
@@ -102,8 +193,8 @@ public:
         return dis(gen);
     }
 
-    vector<Product*> readFile(const string& filename) {
-        ifstream file(filename);
+    void readFile() {
+        ifstream file(filename_);
         vector<Product*> products;
         string line;
         while (getline(file, line)) {
@@ -118,28 +209,90 @@ public:
             int quantity = stoi(tokens[3]);
 
             if (tokens[0] == "Electronics") {
-                products.push_back(new Electronics(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
+                productCatalog_->addProduct(new Electronics(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
             } else if (tokens[0] == "Books") {
-                products.push_back(new Books(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
+                productCatalog_->addProduct(new Books(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
             } else if (tokens[0] == "Clothing") {
-                products.push_back(new Clothing(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
+                productCatalog_->addProduct(new Clothing(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
             }
         }
         file.close();
-        return products;
     }
+private:
+    string filename_;
+    ProductCatalog* productCatalog_;
+};
+
+enum StartCommands {
+    inventory = 1,
+    order = 2,
+    leave = 3
+};
+
+enum InventoryCommands {
+    appendProduct = 1,
+    removeProduct = 2,
+    updateProduct = 3,
+    viewProducts = 4,
+    viewProductsByType = 5
 };
 
 int main() {
-    FileReader fileReader;
-    vector<Product*> products = fileReader.readFile(R"(C:\Users\Admin\CLionProjects\e-commerce_system\products.txt)");
-    for (const auto& product : products) {
-        product->viewProduct();
-        cout << "Total Cost: $" << product->calculateTotalCost() << endl;
-        cout << "------------------------" << endl;
-    }
-    for (const auto& product : products) {
-        delete product;
+    ProductCatalog productManager;
+    FileReader fileReader(R"(C:\Users\Admin\CLionProjects\e-commerce_system\products.txt)", &productManager);
+    fileReader.readFile();
+    int command, inventoryCommand, quantity, productId;
+    double newPrice;
+    string type;
+    while (true) {
+        cout << "1->inventory/2->order/3-leave:" << endl;
+        cin >> command;
+        cin.ignore();
+        if (command == inventory) {
+            cout << "1->addProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsByType:" << endl;
+            cin >> inventoryCommand;
+            cin.ignore();
+            if (inventoryCommand == appendProduct) {
+                productManager.viewProductListWithIds();
+                cout << "Enter the product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                cout << "Enter the quantity:" << endl;
+                cin >> quantity;
+                cin.ignore();
+                productManager.appendProduct(productId, quantity);
+            } else if (inventoryCommand == removeProduct) {
+                productManager.viewProductListWithIds();
+                cout << "Enter the product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                productManager.removeProduct(productId);
+            } else if (inventoryCommand == updateProduct) {
+                productManager.viewProductListWithIds();
+                cout << "Enter the product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                cout << "Enter the price:" << endl;
+                cin >> newPrice;
+                cin.ignore();
+                productManager.updateProduct(productId, newPrice);
+            } else if (inventoryCommand == viewProducts) {
+                productManager.viewProducts();
+            } else if (inventoryCommand == viewProductsByType) {
+                cout << "Enter the product type:" << endl;
+                getline(cin, type);
+                productManager.viewProductsByType(type);
+            } else {
+                cout << "Enter a valid command!" << endl;
+            }
+        } else if (command == order) {
+            cout << "nothing to show" << endl;
+        } else if (command == leave) {
+            cout << "Program finished!" << endl;
+            break;
+        } else {
+            cout << "Enter a valid command!" << endl;
+        }
     }
     return 0;
 }
