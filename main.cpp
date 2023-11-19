@@ -4,8 +4,22 @@
 #include <random>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
+vector<int> generatedIds;
+
+int generateRandomId() {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dis(10000, 99999);
+    int id;
+    do {
+        id = dis(gen);
+    } while (find(generatedIds.begin(), generatedIds.end(), id) != generatedIds.end());
+    generatedIds.push_back(id);
+    return id;
+}
 
 class Product {
 public:
@@ -28,16 +42,7 @@ public:
 
     void setPrice(double p) { price_ = p; }
 
-    void appendProduct(int q) { quantity_ += q; }
-
-    void removeProduct() {
-        if (quantity_ > 0) {
-            quantity_--;
-        }
-        else {
-            cout << "Impossible to remove this product" << endl;
-        }
-    }
+    void updateQuantity(int q) { quantity_ += q; }
 private:
     int productId_;
     string name_;
@@ -116,37 +121,46 @@ public:
         cout << "" << endl;
     }
 
-    void appendProduct(int productId, int quantity) {
-        for (const auto& product : products_) {
-            if (product->getId() == productId) {
-                product->appendProduct(quantity);
-                cout << "New " << product->getName() << " quantity: " << product->getQuantity() << endl;
-                return;
-            }
+    void addNewProduct(const string& type, const string& name, double price, int quantity, const vector<string>& additionalInfo) {
+        int id = generateRandomId();
+        if (type == "Electronics") {
+            addProduct(new Electronics(id, name, price, quantity, additionalInfo[0], additionalInfo[1], additionalInfo[2]));
+        } else if (type == "Books") {
+            addProduct(new Books(id, name, price, quantity, additionalInfo[0], additionalInfo[1], additionalInfo[2]));
+        } else if (type == "Clothing") {
+            addProduct(new Clothing(id, name, price, quantity, additionalInfo[0], additionalInfo[1], additionalInfo[2]));
+        } else {
+            cout << "Invalid product type" << endl;
         }
-        cout << "Product is not found" << endl;
     }
 
     void removeProduct(int productId) {
-        for (const auto& product : products_) {
-            if (product->getId() == productId) {
-                product->removeProduct();
-                cout << "Product " << product->getName() << " was removed" << endl;
-                return;
-            }
+        auto it = remove_if(products_.begin(), products_.end(), [productId](Product* product) {
+            return product->getId() == productId;
+        });
+        if (it != products_.end()) {
+            delete *it;
+            products_.erase(it, products_.end());
+            cout << "Product with ID " << productId << " has been removed." << endl;
+        } else {
+            cout << "Product not found" << endl;
         }
-        cout << "Product is not found" << endl;
     }
 
-    void updateProduct(int productId, double newPrice) {
+    void updateProduct(int productId, int quantity, double newPrice) {
         for (const auto& product : products_) {
             if (product->getId() == productId) {
-                product->setPrice(newPrice);
-                cout << "New " << product->getName() << " price: $" << product->getPrice() << endl;
+                if ((product->getQuantity() + quantity) > 0) {
+                    product->updateQuantity(quantity);
+                    product->setPrice(newPrice);
+                    cout << product->getName() << ": New price - " << product->getPrice() << "$, New quantity - " << product->getQuantity() << endl;
+                } else {
+                    cout << "Invalid quantity. Max quantity slice available is " << 0 - product->getQuantity() << endl;
+                }
                 return;
             }
         }
-        cout << "Product is not found" << endl;
+        cout << "Product not found" << endl;
     }
 
     void viewProducts() {
@@ -158,19 +172,32 @@ public:
     }
 
     void viewProductsByType(const string& type) {
-        int counter;
+        bool found = false;
         for (const auto& product : products_) {
             if (product->getType() == type) {
                 product->viewProduct();
                 cout << "Total Cost: $" << product->calculateTotalCost() << endl;
                 cout << "-------------" << endl;
-                counter++;
-            }
-            if (counter == 3) {
-                return;
+                found = true;
             }
         }
+        if (found) {
+            return;
+        }
         cout << "Invalid type" << endl;
+    }
+
+    void checkLowQuantity() {
+        bool allProductsNormal = true;
+        for (const auto& product : products_) {
+            if (product->getQuantity() < 5) {
+                allProductsNormal = false;
+                cout << product->getName() << " has low quantity. Current quantity: " << product->getQuantity() << endl;
+            }
+        }
+        if (allProductsNormal) {
+            cout << "All products have a sufficient quantity!" << endl;
+        }
     }
 
     ~ProductCatalog() {
@@ -186,13 +213,6 @@ class FileReader {
 public:
     FileReader(const string& filename, ProductCatalog* productCatalog) : filename_(filename), productCatalog_(productCatalog) {}
 
-    static int generateRandomTicketId() {
-        random_device rd;
-        mt19937 gen(rd());
-        uniform_int_distribution<int> dis(10000, 99999);
-        return dis(gen);
-    }
-
     void readFile() {
         ifstream file(filename_);
         vector<Product*> products;
@@ -204,7 +224,7 @@ public:
             while (getline(iss, token, ','))
                 tokens.push_back(token);
 
-            int id = generateRandomTicketId();
+            int id = generateRandomId();
             double price = stod(tokens[2]);
             int quantity = stoi(tokens[3]);
 
@@ -230,65 +250,87 @@ enum StartCommands {
 };
 
 enum InventoryCommands {
-    appendProduct = 1,
+    addNewProduct = 1,
     removeProduct = 2,
     updateProduct = 3,
     viewProducts = 4,
-    viewProductsByType = 5
+    viewProductsByType = 5,
+    checkLowQuantity = 6
 };
 
 int main() {
-    ProductCatalog productManager;
-    FileReader fileReader(R"(C:\Users\Admin\CLionProjects\e-commerce_system\products.txt)", &productManager);
+    ProductCatalog productCatalog;
+    FileReader fileReader(R"(C:\Users\Admin\CLionProjects\e-commerce_system\products.txt)", &productCatalog);
     fileReader.readFile();
     int command, inventoryCommand, quantity, productId;
     double newPrice;
-    string type;
+    string type, name;
+    vector<string> additionalInfo;
     while (true) {
         cout << "1->inventory/2->order/3-leave:" << endl;
         cin >> command;
         cin.ignore();
         if (command == inventory) {
-            cout << "1->addProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsByType:" << endl;
+            cout << "1->addNewProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsByType/6-checkLowQuantity:" << endl;
             cin >> inventoryCommand;
             cin.ignore();
-            if (inventoryCommand == appendProduct) {
-                productManager.viewProductListWithIds();
-                cout << "Enter the product ID:" << endl;
-                cin >> productId;
-                cin.ignore();
-                cout << "Enter the quantity:" << endl;
-                cin >> quantity;
-                cin.ignore();
-                productManager.appendProduct(productId, quantity);
-            } else if (inventoryCommand == removeProduct) {
-                productManager.viewProductListWithIds();
-                cout << "Enter the product ID:" << endl;
-                cin >> productId;
-                cin.ignore();
-                productManager.removeProduct(productId);
-            } else if (inventoryCommand == updateProduct) {
-                productManager.viewProductListWithIds();
-                cout << "Enter the product ID:" << endl;
-                cin >> productId;
-                cin.ignore();
-                cout << "Enter the price:" << endl;
+            if (inventoryCommand == addNewProduct) {
+                cout << "Enter product type (Electronics/Books/Clothing):" << endl;
+                getline(cin, type);
+                cout << "Enter product name:" << endl;
+                getline(cin, name);
+                cout << "Enter price:" << endl;
                 cin >> newPrice;
                 cin.ignore();
-                productManager.updateProduct(productId, newPrice);
+                cout << "Enter quantity:" << endl;
+                cin >> quantity;
+                cin.ignore();
+                if (type == "Electronics" || type == "Books" || type == "Clothing") {
+                    for (int i = 0; i < 3; ++i) {
+                        cout << "Enter additional info #" << (i + 1) << ":" << endl;
+                        string info;
+                        getline(cin, info);
+                        additionalInfo.push_back(info);
+                    }
+                    productCatalog.addNewProduct(type, name, newPrice, quantity, additionalInfo);
+                    additionalInfo.clear();
+                    cout << "Product added successfully!" << endl;
+                } else {
+                    cout << "Invalid product type" << endl;
+                }
+            } else if (inventoryCommand == removeProduct) {
+                productCatalog.viewProductListWithIds();
+                cout << "Enter product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                productCatalog.removeProduct(productId);
+            } else if (inventoryCommand == updateProduct) {
+                productCatalog.viewProductListWithIds();
+                cout << "Enter product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                cout << "Enter quantity:" << endl;
+                cin >> quantity;
+                cin.ignore();
+                cout << "Enter price:" << endl;
+                cin >> newPrice;
+                cin.ignore();
+                productCatalog.updateProduct(productId, quantity, newPrice);
             } else if (inventoryCommand == viewProducts) {
-                productManager.viewProducts();
+                productCatalog.viewProducts();
             } else if (inventoryCommand == viewProductsByType) {
                 cout << "Enter the product type:" << endl;
                 getline(cin, type);
-                productManager.viewProductsByType(type);
+                productCatalog.viewProductsByType(type);
+            } else if (inventoryCommand == checkLowQuantity) {
+                productCatalog.checkLowQuantity();
             } else {
                 cout << "Enter a valid command!" << endl;
             }
         } else if (command == order) {
             cout << "nothing to show" << endl;
         } else if (command == leave) {
-            cout << "Program finished!" << endl;
+            cout << "Program stopped!" << endl;
             break;
         } else {
             cout << "Enter a valid command!" << endl;
