@@ -3,4 +3,9 @@ project(e_commerce_system)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(e_commerce_system main.cpp)
+add_executable(e_commerce_system main.cpp
+        Product.h
+        ProductCatalog.h
+        Order.h
+        FileReader.h
+        RandomId.h)
