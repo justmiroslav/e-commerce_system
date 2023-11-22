@@ -1,5 +1,4 @@
-#ifndef E_COMMERCE_SYSTEM_RANDOMID_H
-#define E_COMMERCE_SYSTEM_RANDOMID_H
+#pragma once
 #include <random>
 
 vector<int> generatedIds;
@@ -15,5 +14,3 @@ int generateRandomId() {
     generatedIds.push_back(id);
     return id;
 }
-
-#endif //E_COMMERCE_SYSTEM_RANDOMID_H

@@ -1,5 +1,4 @@
-#ifndef E_COMMERCE_SYSTEM_FILEREADER_H
-#define E_COMMERCE_SYSTEM_FILEREADER_H
+#pragma once
 #include <sstream>
 #include <fstream>
 #include "ProductCatalog.h"
@@ -10,7 +9,6 @@ public:
 
     void readFile() {
         ifstream file(filename_);
-        vector<Product*> products;
         string line;
         while (getline(file, line)) {
             vector<string> tokens;
@@ -18,11 +16,9 @@ public:
             string token;
             while (getline(iss, token, ','))
                 tokens.push_back(token);
-
             int id = generateRandomId();
             double price = stod(tokens[2]);
             int quantity = stoi(tokens[3]);
-
             if (tokens[0] == "Electronics") {
                 productCatalog_->addProduct(new Electronics(id, tokens[1], price, quantity, tokens[4], tokens[5], tokens[6]));
             } else if (tokens[0] == "Books") {
@@ -33,9 +29,8 @@ public:
         }
         file.close();
     }
+
 private:
     string filename_;
     ProductCatalog* productCatalog_;
 };
-
-#endif //E_COMMERCE_SYSTEM_FILEREADER_H

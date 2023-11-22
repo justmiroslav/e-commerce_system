@@ -1,5 +1,4 @@
-#ifndef E_COMMERCE_SYSTEM_ORDER_H
-#define E_COMMERCE_SYSTEM_ORDER_H
+#pragma once
 #include <unordered_map>
 #include "ProductCatalog.h"
 
@@ -28,58 +27,41 @@ public:
         }
     }
 
+    bool isValidOrderId(int orderId) const {
+        return orders_.find(orderId) != orders_.end();
+    }
+
     void viewProductsWithIds(int orderId) {
-        auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
+        cout << "Order " << orderId << ":" << endl;
+        size_t i = 0;
+        for (const auto& product : orders_[orderId]) {
+            cout << product->getQuantity() << " " << product->getName() << " = " << product->getId();
+            if (++i < orders_[orderId].size()) {
+                cout << "; ";
+            } else {
+                cout << "." << endl;
+            }
         }
-        cout << "Order " << orderId << ":\n" << endl;
-        for (const auto &product: orders_[orderId]) {
-            cout << product->getName() << " = " << product->getId() << endl;
-        }
-        cout << "" << endl;
     }
 
     void addToOrder(int orderId, int productId, int quantity) {
-        auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
-        }
         Product* product = productCatalog_->getProductById(productId);
         if (product) {
             auto& order = orders_[orderId];
             auto newProduct = find_if(order.begin(), order.end(), [productId](Product* p) {
                 return p->getId() == productId;
             });
-
-            if (newProduct != order.end()) {
-                if (quantity > 0 && (*newProduct)->getQuantity() - quantity >= 0) {
+            if (quantity > 0 && product->getQuantity() - quantity >= 0) {
+                product->updateQuantity(-quantity);
+                if (newProduct != order.end()) {
                     (*newProduct)->updateQuantity(quantity);
-                    product->updateQuantity(-quantity);
                     cout << "New Quantity of product " << (*newProduct)->getName() << ": " << (*newProduct)->getQuantity() << endl;
                 } else {
-                    cout << "Invalid quantity. Max quantity slice available is " << (*newProduct)->getQuantity() << endl;
+                    order.push_back(product->extractProducts(quantity));
+                    cout << quantity << " " << product->getName() << " successfully added to Order " << orderId << "!" << endl;
                 }
             } else {
-                if (quantity > 0 && product->getQuantity() - quantity >= 0) {
-                    product->updateQuantity(-quantity);
-                    string type = product->getType();
-                    if (type == "Electronics") {
-                        auto pElectronics = dynamic_cast<Electronics*>(product);
-                        order.push_back(new Electronics(product->getId(), product->getName(), product->getPrice(), quantity, pElectronics->getBrand(), pElectronics->getModel(), pElectronics->getPower()));
-                    } else if (type == "Books") {
-                        auto pBooks = dynamic_cast<Books*>(product);
-                        order.push_back(new Books(product->getId(), product->getName(), product->getPrice(), quantity, pBooks->getAuthor(), pBooks->getGenre(), pBooks->getISBN()));
-                    } else if (type == "Clothing") {
-                        auto pClothing = dynamic_cast<Clothing*>(product);
-                        order.push_back(new Clothing(product->getId(), product->getName(), product->getPrice(), quantity, pClothing->getSize(), pClothing->getColor(), pClothing->getMaterial()));
-                    }
-                    cout << quantity << " " << product->getName() << "'s successfully added to Order " << orderId << "!" << endl;
-                } else {
-                    cout << "Invalid quantity. Max quantity slice available is " << product->getQuantity() << endl;
-                }
+                cout << "Invalid quantity. Max quantity slice available is " << product->getQuantity() << endl;
             }
         } else {
             cout << "Invalid ID" << endl;
@@ -87,11 +69,6 @@ public:
     }
 
     void removeFromOrder(int orderId, int productId, int quantity) {
-        auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
-        }
         auto& order = orders_[orderId];
         auto selectedOrder = find_if(order.begin(), order.end(), [productId](Product* p) {
             return p->getId() == productId;
@@ -116,11 +93,6 @@ public:
     }
 
     void viewOrder(int orderId) {
-        auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
-        }
         cout << "Order ID: " << orderId << endl;
         for (const auto &product: orders_[orderId]) {
             product->viewProduct();
@@ -130,11 +102,6 @@ public:
     }
 
     void calculateTotalOrderCost(int orderId) {
-        auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
-        }
         double totalCost = 0.0;
         for (const auto& product : orders_[orderId]) {
             totalCost += product->calculateTotalCost();
@@ -148,10 +115,6 @@ public:
 
     void payOrder(int orderId) {
         auto it = orders_.find(orderId);
-        if (it == orders_.end()) {
-            cout << "Order not found" << endl;
-            return;
-        }
         cout << "Order " << orderId << " has been successfully paid." << endl;
         calculateTotalOrderCost(orderId);
         for (const auto& product : it->second) {
@@ -159,9 +122,16 @@ public:
         }
         orders_.erase(it);
     }
+
+    ~Order() {
+        for (const auto& order : orders_) {
+            for (const auto& product : order.second) {
+                delete product;
+            }
+        }
+    }
+
 private:
     ProductCatalog* productCatalog_;
     unordered_map<int, vector<Product*>> orders_;
 };
-
-#endif //E_COMMERCE_SYSTEM_ORDER_H

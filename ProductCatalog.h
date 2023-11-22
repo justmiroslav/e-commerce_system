@@ -1,5 +1,4 @@
-#ifndef E_COMMERCE_SYSTEM_PRODUCTCATALOG_H
-#define E_COMMERCE_SYSTEM_PRODUCTCATALOG_H
+#pragma once
 #include "Product.h"
 #include "RandomId.h"
 
@@ -19,11 +18,24 @@ public:
     }
 
     void viewProductsWithIds() {
-        cout << "Product List with IDs: \n" << endl;
+        cout << "Product List with IDs:\n" << endl;
         for (const auto& product : products_) {
-            cout << product->getName() << " = " << product->getId() << endl;
+            cout << "Product: " << product->getName() << ", Quantity: " << product->getQuantity() << ". ID: " << product->getId() << "." << endl;
         }
         cout << "" << endl;
+    }
+
+    void viewProductsName() {
+        cout << "Product List:" << endl;
+        size_t i = 0;
+        for (const auto& product : products_) {
+            cout << product->getName();
+            if (++i < products_.size()) {
+                cout << ", ";
+            } else {
+                cout << "." << endl;
+            }
+        }
     }
 
     void addNewProduct(const string& type, const string& name, double price, int quantity, const vector<string>& additionalInfo) {
@@ -97,7 +109,19 @@ public:
         cout << "Invalid type" << endl;
     }
 
-    void checkLowQuantity() {
+    void viewProductByName(const string& name) {
+        for (const auto& product : products_) {
+            if (product->getName() == name) {
+                product->viewProduct();
+                cout << "Total Cost: $" << product->calculateTotalCost() << endl;
+                cout << "-------------" << endl;
+                return;
+            }
+        }
+        cout << "Invalid name" << endl;
+    }
+
+    void checkQuantity() {
         bool allProductsNormal = true;
         for (const auto& product : products_) {
             if (product->getQuantity() < 5) {
@@ -115,8 +139,7 @@ public:
             delete product;
         }
     }
+
 private:
     vector<Product*> products_;
 };
-
-#endif //E_COMMERCE_SYSTEM_PRODUCTCATALOG_H

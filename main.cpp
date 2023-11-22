@@ -1,4 +1,3 @@
-#include "ProductCatalog.h"
 #include "Order.h"
 #include "FileReader.h"
 
@@ -9,12 +8,13 @@ enum StartCommands {
 };
 
 enum InventoryCommands {
-    addNewProduct = 1,
+    addProduct = 1,
     removeProduct = 2,
     updateProduct = 3,
     viewProducts = 4,
-    viewProductsByType = 5,
-    checkLowQuantity = 6
+    viewProductsType = 5,
+    viewProductName = 6,
+    checkQuantity = 7
 };
 
 enum OrderCommands {
@@ -40,10 +40,10 @@ int main() {
         cin >> StartCommand;
         cin.ignore();
         if (StartCommand == inventory) {
-            cout << "1->addNewProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsByType/6-checkLowQuantity:" << endl;
+            cout << "1->addProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsType/6->viewProductName/7-checkQuantity:" << endl;
             cin >> inventoryCommand;
             cin.ignore();
-            if (inventoryCommand == addNewProduct) {
+            if (inventoryCommand == addProduct) {
                 cout << "Enter product type (Electronics/Books/Clothing):" << endl;
                 getline(cin, type);
                 cout << "Enter product name:" << endl;
@@ -87,12 +87,17 @@ int main() {
                 productCatalog.updateProduct(productId, quantity, newPrice);
             } else if (inventoryCommand == viewProducts) {
                 productCatalog.viewProducts();
-            } else if (inventoryCommand == viewProductsByType) {
+            } else if (inventoryCommand == viewProductsType) {
                 cout << "Enter product type (Electronics/Books/Clothing):" << endl;
                 getline(cin, type);
                 productCatalog.viewProductsByType(type);
-            } else if (inventoryCommand == checkLowQuantity) {
-                productCatalog.checkLowQuantity();
+            } else if (inventoryCommand == viewProductName) {
+                productCatalog.viewProductsName();
+                cout << "Enter product name:" << endl;
+                getline(cin, name);
+                productCatalog.viewProductByName(name);
+            } else if (inventoryCommand == checkQuantity) {
+                productCatalog.checkQuantity();
             } else {
                 cout << "Enter a valid command!" << endl;
             }
@@ -112,6 +117,10 @@ int main() {
                 cout << "Enter Order ID:" << endl;
                 cin >> orderId;
                 cin.ignore();
+                if (!orderManager.isValidOrderId(orderId)) {
+                    cout << "Order not found" << endl;
+                    continue;
+                }
                 if (orderCommand == addToOrder) {
                     productCatalog.viewProductsWithIds();
                     cout << "Enter product ID:" << endl;
