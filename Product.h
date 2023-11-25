@@ -16,6 +16,7 @@ public:
     double calculateTotalCost() const;
     virtual void viewProduct() const;
     virtual Product* extractProducts(int quantity) const = 0;
+    virtual bool updateField(const string& fieldToUpdate, const string& newValue) = 0;
     virtual string getType() const = 0;
     void setPrice(double p);
     void updateQuantity(int q);
@@ -34,9 +35,14 @@ public:
     string getBrand() const;
     string getModel() const;
     string getPower() const;
+    void setBrand(const string& brand);
+    void setModel(const string& model);
+    void setPower(const string& power);
+    bool updateField(const string& fieldToUpdate, const string& newValue) override;
     void viewProduct() const override;
     Electronics* extractProducts(int quantity) const override;
     string getType() const override;
+
 private:
     string brand_;
     string model_;
@@ -50,9 +56,14 @@ public:
     string getAuthor() const;
     string getGenre() const;
     string getISBN() const;
+    void setAuthor(const string& author);
+    void setGenre(const string& genre);
+    void setISBN(const string& isbn);
+    bool updateField(const string& fieldToUpdate, const string& newValue) override;
     void viewProduct() const override;
     Books* extractProducts(int quantity) const override;
     string getType() const override;
+
 private:
     string author_;
     string genre_;
@@ -66,9 +77,14 @@ public:
     string getSize() const;
     string getColor() const;
     string getMaterial() const;
+    void setSize(const string& size);
+    void setColor(const string& color);
+    void setMaterial(const string& material);
+    bool updateField(const string& fieldToUpdate, const string& newValue) override;
     void viewProduct() const override;
     Clothing* extractProducts(int quantity) const override;
     string getType() const override;
+
 private:
     string size_;
     string color_;

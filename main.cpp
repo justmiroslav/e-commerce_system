@@ -10,11 +10,13 @@ enum StartCommands {
 enum InventoryCommands {
     addProduct = 1,
     removeProduct = 2,
-    updateProduct = 3,
-    viewProducts = 4,
-    viewProductsType = 5,
-    viewProductName = 6,
-    checkQuantity = 7
+    updateGeneralInfo = 3,
+    updateSpecificInfo = 4,
+    minusBook = 5,
+    viewInventory = 6,
+    viewCategory = 7,
+    viewProduct = 8,
+    checkQuantity = 9
 };
 
 enum OrderCommands {
@@ -33,14 +35,14 @@ int main() {
     fileReader.readFile();
     int StartCommand, inventoryCommand, orderCommand, quantity, productId, orderId;
     double newPrice;
-    string type, name, quantityInput, priceInput;
+    string type, name, quantityInput, priceInput, fieldToUpdate, newValue;
     vector<string> additionalInfo;
     while (true) {
         cout << "1->inventory/2->order/3-leave:" << endl;
         cin >> StartCommand;
         cin.ignore();
         if (StartCommand == inventory) {
-            cout << "1->addProduct/2->removeProduct/3->updateProduct/4->viewProducts/5->viewProductsType/6->viewProductName/7-checkQuantity:" << endl;
+            cout << "1->addProduct/2->removeProduct/3->updateGeneralInfo/4->updateSpecificInfo/5->minusBook/6->viewInventory/7->viewCategory/8->viewProduct/9-checkQuantity:" << endl;
             cin >> inventoryCommand;
             cin.ignore();
             if (inventoryCommand == addProduct) {
@@ -68,13 +70,13 @@ int main() {
                     cout << "Invalid product type" << endl;
                 }
             } else if (inventoryCommand == removeProduct) {
-                productCatalog.viewProductsWithIds();
+                productCatalog.viewNameQuantityId();
                 cout << "Enter product ID:" << endl;
                 cin >> productId;
                 cin.ignore();
                 productCatalog.removeProduct(productId);
-            } else if (inventoryCommand == updateProduct) {
-                productCatalog.viewProductsWithIds();
+            } else if (inventoryCommand == updateGeneralInfo) {
+                productCatalog.viewNameQuantityId();
                 cout << "Enter product ID:" << endl;
                 cin >> productId;
                 cin.ignore();
@@ -84,18 +86,35 @@ int main() {
                 cout << "Enter price (- to keep current price):" << endl;
                 getline(cin, priceInput);
                 newPrice = (priceInput != "-") ? stod(priceInput) : 0;
-                productCatalog.updateProduct(productId, quantity, newPrice);
-            } else if (inventoryCommand == viewProducts) {
-                productCatalog.viewProducts();
-            } else if (inventoryCommand == viewProductsType) {
+                productCatalog.updateGeneralInfo(productId, quantity, newPrice);
+            } else if (inventoryCommand == updateSpecificInfo) {
+                productCatalog.viewCategoryIdName();
+                cout << "Enter product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                cout << "Enter field to update:" << endl;
+                getline(cin, fieldToUpdate);
+                cout << "Enter new value:" << endl;
+                getline(cin, newValue);
+                productCatalog.updateSpecificInfo(productId, fieldToUpdate, newValue);
+            } else if (inventoryCommand == minusBook) {
+                productCatalog.viewBooks();
+                cout << "Enter quantity:" << endl;
+                cin >> quantity;
+                cin.ignore();
+                productCatalog.reduceBooks(quantity);
+            } else if (inventoryCommand == viewInventory) {
+                productCatalog.viewInventory();
+            } else if (inventoryCommand == viewCategory) {
                 cout << "Enter product type (Electronics/Books/Clothing):" << endl;
                 getline(cin, type);
-                productCatalog.viewProductsByType(type);
-            } else if (inventoryCommand == viewProductName) {
-                productCatalog.viewProductsName();
-                cout << "Enter product name:" << endl;
-                getline(cin, name);
-                productCatalog.viewProductByName(name);
+                productCatalog.viewCategory(type);
+            } else if (inventoryCommand == viewProduct) {
+                productCatalog.viewNameQuantityId();
+                cout << "Enter product ID:" << endl;
+                cin >> productId;
+                cin.ignore();
+                productCatalog.viewProduct(productId);
             } else if (inventoryCommand == checkQuantity) {
                 productCatalog.checkQuantity();
             } else {
@@ -122,7 +141,7 @@ int main() {
                     continue;
                 }
                 if (orderCommand == addToOrder) {
-                    productCatalog.viewProductsWithIds();
+                    productCatalog.viewNameQuantityId();
                     cout << "Enter product ID:" << endl;
                     cin >> productId;
                     cin.ignore();

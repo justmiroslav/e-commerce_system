@@ -50,8 +50,37 @@ string Electronics::getPower() const {
     return power_;
 }
 
+void Electronics::setBrand(const string& brand) {
+    brand_ = brand;
+}
+
+void Electronics::setModel(const string& model) {
+    model_ = model;
+}
+
+void Electronics::setPower(const string& power) {
+    power_ = power;
+}
+
+bool Electronics::updateField(const string& fieldToUpdate, const string& newValue) {
+    bool invalid = false;
+    string lowercaseField = fieldToUpdate;
+    transform(lowercaseField.begin(), lowercaseField.end(), lowercaseField.begin(), ::tolower);
+    if (lowercaseField == "brand") {
+        setBrand(newValue);
+    } else if (lowercaseField == "model") {
+        setModel(newValue);
+    } else if (lowercaseField == "power") {
+        setPower(newValue);
+    } else {
+        cout << "Electronics don't have such field" << endl;
+        invalid = true;
+    }
+    return invalid;
+}
+
 void Electronics::viewProduct() const {
-    cout << getName() << " " << brand_ << " " << model_ << "." << endl;
+    cout << getName() << " " << brand_ << " " << model_ << " " << power_ << "." << endl;
     Product::viewProduct();
 }
 
@@ -78,8 +107,38 @@ string Books::getISBN() const {
     return ISBN_;
 }
 
+void Books::setAuthor(const string& author) {
+    author_ = author;
+}
+
+void Books::setGenre(const string& genre) {
+    genre_ = genre;
+}
+
+void Books::setISBN(const string& isbn) {
+    ISBN_ = isbn;
+}
+
+bool Books::updateField(const string& fieldToUpdate, const string& newValue) {
+    bool invalid = false;
+    string lowercaseField = fieldToUpdate;
+    transform(lowercaseField.begin(), lowercaseField.end(), lowercaseField.begin(), ::tolower);
+    if (lowercaseField == "author") {
+        setAuthor(newValue);
+    } else if (lowercaseField == "genre") {
+        setGenre(newValue);
+    } else if (lowercaseField == "isbn") {
+        setISBN(newValue);
+    } else {
+        cout << "Books don't have such field" << endl;
+        invalid = true;
+    }
+    return invalid;
+}
+
 void Books::viewProduct() const {
     cout << getName() << " by " << author_ << ", genre: " << genre_ << "." << endl;
+    cout << "ISBN: " << ISBN_ << "." << endl;
     Product::viewProduct();
 }
 
@@ -104,6 +163,35 @@ string Clothing::getColor() const {
 
 string Clothing::getMaterial() const {
     return material_;
+}
+
+void Clothing::setSize(const string& size) {
+    size_ = size;
+}
+
+void Clothing::setColor(const string& color) {
+    color_ = color;
+}
+
+void Clothing::setMaterial(const string& material) {
+    material_ = material;
+}
+
+bool Clothing::updateField(const string& fieldToUpdate, const string& newValue) {
+    bool invalid = false;
+    string lowercaseField = fieldToUpdate;
+    transform(lowercaseField.begin(), lowercaseField.end(), lowercaseField.begin(), ::tolower);
+    if (lowercaseField == "size") {
+        setSize(newValue);
+    } else if (lowercaseField == "color") {
+        setColor(newValue);
+    } else if (lowercaseField == "material") {
+        setMaterial(newValue);
+    } else {
+        cout << "Clothing don't have such field" << endl;
+        invalid = true;
+    }
+    return invalid;
 }
 
 void Clothing::viewProduct() const {

@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "Product.h"
 #include "RandomId.h"
 
@@ -17,23 +18,42 @@ public:
         return nullptr;
     }
 
-    void viewProductsWithIds() {
-        cout << "Product List with IDs:\n" << endl;
+    void viewNameQuantityId() {
+        cout << "Products:" << endl;
         for (const auto& product : products_) {
-            cout << "Product: " << product->getName() << ", Quantity: " << product->getQuantity() << ". ID: " << product->getId() << "." << endl;
+            cout << "Name: " << product->getName() << ", Quantity: " << product->getQuantity() << ". ID: " << product->getId() << "." << endl;
         }
-        cout << "" << endl;
     }
 
-    void viewProductsName() {
-        cout << "Product List:" << endl;
-        size_t i = 0;
-        for (const auto& product : products_) {
-            cout << product->getName();
-            if (++i < products_.size()) {
-                cout << ", ";
+    void viewCategoryIdName() {
+        for (const auto& entry : categoryIdName()) {
+            const string& category = entry.first;
+            const auto& idName = entry.second;
+            cout << category << ": ProductIds: (";
+            for (size_t i = 0; i < idName.size(); ++i) {
+                cout << idName[i].first << "->" << idName[i].second;
+                if (i < idName.size() - 1) {
+                    cout << ", ";
+                }
+            }
+            cout << "), Fields: (";
+            const auto& firstProduct = idName.front();
+            if (dynamic_cast<Electronics*>(getProductById(firstProduct.first))) {
+                cout << "brand/model/power";
+            } else if (dynamic_cast<Books*>(getProductById(firstProduct.first))) {
+                cout << "author/genre/ISBN";
             } else {
-                cout << "." << endl;
+                cout << "size/color/material";
+            }
+            cout << ")" << endl;
+        }
+    }
+
+    void viewBooks() {
+        cout << "Books:" << endl;
+        for (auto& product : products_) {
+            if (auto* book = dynamic_cast<Books*>(product)) {
+                cout << "Name: " << book->getName() << ", Quantity: " << book->getQuantity() << "." << endl;
             }
         }
     }
@@ -64,11 +84,11 @@ public:
         }
     }
 
-    void updateProduct(int productId, int quantity, double newPrice) {
+    void updateGeneralInfo(int productId, int quantity, double newPrice) {
         for (auto& product : products_) {
             if (product->getId() == productId) {
                 if (quantity != 0) {
-                    if (product->getQuantity() + quantity > 0) {
+                    if (product->getQuantity() + quantity >= 0) {
                         product->updateQuantity(quantity);
                         cout << product->getName() << ": New quantity - " << product->getQuantity() << endl;
                     } else {
@@ -85,7 +105,37 @@ public:
         cout << "Product not found" << endl;
     }
 
-    void viewProducts() {
+    void updateSpecificInfo(int productId, const string& fieldToUpdate, const string& newValue) {
+        for (auto& product : products_) {
+            if (product->getId() == productId) {
+                bool invalid = product->updateField(fieldToUpdate, newValue);
+                if (!invalid) {
+                    cout << "Product successfully updated" << endl;
+                }
+                return;
+            }
+        }
+        cout << "Product not found" << endl;
+    }
+
+    void reduceBooks(int quantity) {
+        for (auto& product : products_) {
+            if (auto* book = dynamic_cast<Books*>(product)) {
+                if (book->getQuantity() - quantity < 0) {
+                    cout << "Invalid quantity slice for " << book->getName() << ". Max quantity slice available is " << product->getQuantity() << endl;
+                    return;
+                }
+            }
+        }
+        for (auto& product : products_) {
+            if (auto* book = dynamic_cast<Books*>(product)) {
+                book->updateQuantity(-quantity);
+            }
+        }
+        cout << "Books quantity updated" << endl;
+    }
+
+    void viewInventory() {
         for (const auto& product : products_) {
             product->viewProduct();
             cout << "Total Cost: $" << product->calculateTotalCost() << endl;
@@ -93,7 +143,7 @@ public:
         }
     }
 
-    void viewProductsByType(const string& type) {
+    void viewCategory(const string& type) {
         bool found = false;
         for (const auto& product : products_) {
             if (product->getType() == type) {
@@ -109,9 +159,9 @@ public:
         cout << "Invalid type" << endl;
     }
 
-    void viewProductByName(const string& name) {
+    void viewProduct(int productId) {
         for (const auto& product : products_) {
-            if (product->getName() == name) {
+            if (product->getId() == productId) {
                 product->viewProduct();
                 cout << "Total Cost: $" << product->calculateTotalCost() << endl;
                 cout << "-------------" << endl;
@@ -142,4 +192,15 @@ public:
 
 private:
     vector<Product*> products_;
+
+    map<string, vector<pair<int, string>>> categoryIdName() {
+        map<string, vector<pair<int, string>>> categoryProductIdsNames;
+        for (const auto& product : products_) {
+            const string category = product->getType();
+            const int productId = product->getId();
+            const string productName = product->getName();
+            categoryProductIdsNames[category].emplace_back(productId, productName);
+        }
+        return categoryProductIdsNames;
+    }
 };
